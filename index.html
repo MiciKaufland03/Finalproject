@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+<head>
+     <meta name="viewport" content="width=device-width, initial-scale=1.0"> 
+     <title>WeatherApp - Final Project</title>
+     <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="clock">
+        <div class="date">January 1, 2023</div>
+        <div class="time">12:00:00</div>
+    </div>
+    
+<div class="card">
+    <div class="search">
+        <input type="text" placeholder="enter city name" spellcheck="false" id="cityInput">
+        <button><img src="images/search.png"></button>
+    </div>
+    <div class="error">
+        <p>Invalid city name</p>
+    </div>
+    <div class="weather">
+        <img src="images/mist.png" class="weather-icon">
+        <h1 class="temp">19°c</h1>
+        <h2 class="city">Clinceni</h2>
+        <div class="details">
+            <div class="col">
+                <img src="images/humidity.png">
+                <div>
+                    <p class="humidity">37%</p>
+                    <p>Humidity</p>
+                </div>
+            </div>
+            <div class="col">
+                <img src="images/wind.png">
+                <div>
+                    <p class="wind">14 km/h</p>
+                    <p>Wind Speed</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="forecast">
+            <p>Forecast:</p>
+            <p class="forecast-details">Cloudy with a chance of rain</p>
+        </div>
+
+        <div class="hourly-forecast">
+            
+        </div>
+    </div>
+</div>
+
+<script>
+const apiKey = "5aa2c65279e6ea9014053c641bca9026";
+const apiUrl = "https://api.openweathermap.org/data/2.5/forecast?units=metric&q=";
+
+const searchBox = document.querySelector(".search input");
+const searchBtn = document.querySelector(".search button");
+const weatherIcon = document.querySelector(".weather-icon");
+const errorElement = document.querySelector(".error");
+const hourlyForecastDiv = document.querySelector(".hourly-forecast");
+
+async function checkWeather(city){
+    const response = await fetch(`${apiUrl}${city}&appid=${apiKey}`);
+    if(!response.ok){
+        errorElement.style.display = "block";
+        document.querySelector(".weather").style.display = "none";
+    } else {
+        const data = await response.json();
+
+        document.querySelector(".city").innerHTML = data.city.name;
+        document.querySelector(".temp").innerHTML = Math.round(data.list[0].main.temp) + "°c";
+        document.querySelector(".humidity").innerHTML = data.list[0].main.humidity + "%";
+        document.querySelector(".wind").innerHTML = data.list[0].wind.speed + " km/h";
+
+        switch(data.list[0].weather[0].main){
+            case "Clouds":
+                weatherIcon.src = "images/clouds.png";
+                break;
+            case "Clear":
+                weatherIcon.src = "images/clear.png";
+                break;
+            case "Rain":
+                weatherIcon.src = "images/rain.png";
+                break;
+            case "Drizzle":
+                weatherIcon.src = "images/drizzle.png";
+                break;
+            case "Mist":
+                weatherIcon.src = "images/mist.png";
+                break;
+            default:
+                weatherIcon.src = ""; 
+        }
+
+        const forecastDetails = document.querySelector(".forecast-details");
+        forecastDetails.textContent = data.list[0].weather[0].description;
+
+        document.querySelector(".weather").style.display = "block";
+        errorElement.style.display = "none";
+
+        
+        displayHourlyForecast(data.list);
+    }
+}
+
+function displayHourlyForecast(hourlyData) {
+    hourlyForecastDiv.innerHTML = ''; 
+
+    for (let i = 0; i < 8; i++) {
+        const hour = new Date(hourlyData[i].dt * 1000).getHours();
+        const temperature = Math.round(hourlyData[i].main.temp) + "°c";
+        const iconCode = hourlyData[i].weather[0].icon;
+        const iconUrl = `https://openweathermap.org/img/wn/${iconCode}.png`;
+
+        const hourlyItemHtml = `
+            <div class="hourly-item">
+                <span>${hour}:00</span>
+                <img src="${iconUrl}" alt="Hourly Weather Icon">
+                <span>${temperature}</span>
+            </div>
+        `;
+
+        hourlyForecastDiv.innerHTML += hourlyItemHtml;
+    }
+}
+
+searchBtn.addEventListener("click", ()=>{
+    checkWeather(searchBox.value);
+});
+
+const cityInput = document.getElementById("cityInput");
+
+cityInput.addEventListener("keypress", function(event) {
+    if (event.key === "Enter") {
+        event.preventDefault(); 
+        checkWeather(cityInput.value);
+    }
+});
+
+document.querySelector('.city').addEventListener('click', () => {
+    const cityName = document.querySelector('.city').textContent.trim();
+    window.location.href = `https://en.wikipedia.org/wiki/${cityName}`;
+});
+
+</script>
+
+<script>
+function updateClock() {
+    const now = new Date();
+
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    const dateString = now.toLocaleDateString('en-GB', options);
+
+    const timeString = now.toLocaleTimeString('en-GB');
+
+    document.querySelector('.date').textContent = dateString;
+    document.querySelector('.time').textContent = timeString;
+}
+
+updateClock();
+
+setInterval(updateClock, 1000);
+</script>
+
+</body>
+</html>
